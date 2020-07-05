@@ -1,0 +1,42 @@
+{
+  "name": "curl-git",
+  "version": "7.56.0.55.g4440b6ad5",
+  "release": "1",
+  "description": "'A URL retrieval utility and library'",
+  "source": [
+    "git://github.com/curl/curl.git"
+  ],
+  "sha256sums": null,
+  "md5sums": [
+    "SKIP"
+  ],
+  "makedepends": [
+    "git"
+  ],
+  "depends": [
+    "ca-certificates",
+    "krb5",
+    "libssh2",
+    "openssl",
+    "zlib",
+    "libpsl",
+    "libnghttp2"
+  ],
+  "provides": [
+    "curl=7.56.0.55.g4440b6ad5",
+    "libcurl.so"
+  ],
+  "replaces": null,
+  "conflicts": [
+    "curl"
+  ],
+  "license": [
+    "MIT"
+  ],
+  "arch": [
+    "i686",
+    "x86_64"
+  ],
+  "build()": "{ \n    cd curl;\n    ./buildconf;\n    ./configure --prefix=/usr --mandir=/usr/share/man --disable-ldap --disable-ldaps --enable-ipv6 --enable-manual --enable-versioned-symbols --enable-threaded-resolver --with-gssapi --with-random=/dev/urandom --with-ca-bundle=/etc/ssl/certs/ca-certificates.crt;\n    make\n}",
+  "package()": "{ \n    cd curl;\n    make DESTDIR=\"$pkgdir\" install;\n    install -Dm644 COPYING \"$pkgdir/usr/share/licenses/$pkgname/COPYING\"\n}"
+}
