@@ -110,13 +110,40 @@ def write_json(file, result):
     with open(file, "w") as f:
         print(json.dumps(result, indent=2), file=f)
 
+def write_rpm_section(f, name, value):
+    if value:
+        print("\n%{}\n{}".format(name, value), file=f)
+
+def write_rpm_array(f, name, array):
+    for value in array:
+        write_rpm_field(f, name, value)
+
+def write_rpm_field(f, name, value):
+    if value:
+        print("{}: {}".format(name, value), file=f)
+
+def write_rpm(file, result):
+    with open(file, "w") as f:
+        write_rpm_field(f, "Name", result.get("name"))
+        write_rpm_field(f, "Version", result.get("version"))
+        write_rpm_field(f, "Release", result.get("release"))
+        write_rpm_field(f, "Summary", result.get("description"))
+        write_rpm_array(f, "License", result.get("license"))
+        write_rpm_array(f, "BuildRequires", result.get("makedepends"))
+        write_rpm_field(f, "Source", "{}-{}.tar.gz".format(result.get("name"), result.get("version")))
+        write_rpm_section(f, "description", result.get("description"))
+        write_rpm_section(f, "build", result.get("build()"))
+        write_rpm_section(f, "install", result.get("package()"))
+        write_rpm_section(f, "files", None)
+
 def main():
     parser = argparse.ArgumentParser(description="Convert Linux packages")
     parser.add_argument("pkgbuild", help="Path to PKGBUILD file")
-    parser.add_argument("json", help="Path to json file")
+    parser.add_argument("output", help="Path to output")
     args = parser.parse_args()
     value = read_pkgbuild(args.pkgbuild)
-    write_json(args.json, value)
+    write_json(args.output + ".json", value)
+    write_rpm(args.output + ".spec", value)
 
 if __name__ == "__main__":
     main()
