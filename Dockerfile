@@ -12,5 +12,8 @@ COPY prepare_source.sh .
 RUN ./prepare_source.sh
 
 COPY pktk.py .
+COPY pkgbuild_mapping.json .
 RUN ./pktk.py PKGBUILD out
 RUN rpmbuild -bb out.spec
+
+USER root

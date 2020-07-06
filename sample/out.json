@@ -37,6 +37,6 @@
     "i686",
     "x86_64"
   ],
-  "build()": "{ \n    cd curl;\n    ./buildconf;\n    ./configure --prefix=/usr --mandir=/usr/share/man --disable-ldap --disable-ldaps --enable-ipv6 --enable-manual --enable-versioned-symbols --enable-threaded-resolver --with-gssapi --with-random=/dev/urandom --with-ca-bundle=/etc/ssl/certs/ca-certificates.crt;\n    make\n}",
-  "package()": "{ \n    cd curl;\n    make DESTDIR=\"$pkgdir\" install;\n    install -Dm644 COPYING \"$pkgdir/usr/share/licenses/$pkgname/COPYING\"\n}"
+  "build()": "    cd curl;\n    ./buildconf;\n    ./configure --prefix=/usr --mandir=/usr/share/man --disable-ldap --disable-ldaps --enable-ipv6 --enable-manual --enable-versioned-symbols --enable-threaded-resolver --with-gssapi --with-random=/dev/urandom --with-ca-bundle=/etc/ssl/certs/ca-certificates.crt;\n    make",
+  "package()": "    cd curl;\n    make DESTDIR=\"$pkgdir\" install;\n    install -Dm644 COPYING \"$pkgdir/usr/share/licenses/$pkgname/COPYING\""
 }

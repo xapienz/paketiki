@@ -32,7 +32,8 @@ def parse_set_output(set_output):
     result = {}
     empty_pattern = re.compile(r"^\s*$")
     var_pattern = re.compile(r"^(\w+)=(.*)$")
-    fun_begin_pattern = re.compile(r"^(\w+ \(\))\s*$")
+    fun_title_pattern = re.compile(r"^(\w+ \(\))\s*$")
+    fun_begin_pattern = re.compile(r"^{\s*$")
     fun_end_pattern = re.compile(r"^}$")
 
     fun_name = None
@@ -40,14 +41,15 @@ def parse_set_output(set_output):
     for line in set_output:
         if m := var_pattern.match(line):
             result[m.group(1)] = m.group(2)
-        elif m := fun_begin_pattern.match(line):
+        elif m := fun_title_pattern.match(line):
             fun_name = m.group(1)
             fun_body = []
         elif m := fun_end_pattern.match(line):
-            fun_body.append(line)
             result[fun_name] = "\n".join(fun_body)
             fun_name = None
             fun_body = []
+        elif m := fun_begin_pattern.match(line):
+            continue
         elif fun_name is not None:
             fun_body.append(line)
         elif m := empty_pattern.match(line):
@@ -115,12 +117,33 @@ def write_rpm_section(f, name, value):
         print("\n%{}\n{}".format(name, value), file=f)
 
 def write_rpm_array(f, name, array):
-    for value in array:
-        write_rpm_field(f, name, value)
+    if array:
+        for value in array:
+            write_rpm_field(f, name, value)
 
 def write_rpm_field(f, name, value):
     if value:
         print("{}: {}".format(name, value), file=f)
+
+def replace_packages(list):
+    if not list:
+        return []
+    with open("pkgbuild_mapping.json", "r") as f:
+        mapping = json.load(f)
+
+    result = []
+    for item in list:
+        if mapped := mapping.get(item):
+            result.extend(mapped)
+        else:
+            result.append(item)
+    return result
+
+def wrap_code_section(code):
+    if code:
+        return '    export pkgdir="%{buildroot}"\n' + code
+    else:
+        return None
 
 def write_rpm(file, result):
     with open(file, "w") as f:
@@ -129,12 +152,18 @@ def write_rpm(file, result):
         write_rpm_field(f, "Release", result.get("release"))
         write_rpm_field(f, "Summary", result.get("description"))
         write_rpm_array(f, "License", result.get("license"))
-        write_rpm_array(f, "BuildRequires", result.get("makedepends"))
+        write_rpm_array(f, "Requires", replace_packages(result.get("depends")))
+        write_rpm_array(f, "Provides", replace_packages(result.get("provides")))
+        write_rpm_array(f, "Conflicts", replace_packages(result.get("conflicts")))
+        write_rpm_array(f, "Obsoletes", replace_packages(result.get("replaces")))
+        write_rpm_array(f, "BuildRequires", replace_packages(result.get("makedepends")))
         write_rpm_field(f, "Source", "{}-{}.tar.gz".format(result.get("name"), result.get("version")))
+        print("%define debug_package %{nil}", file=f)
+        write_rpm_section(f, "prep", "%setup")
         write_rpm_section(f, "description", result.get("description"))
-        write_rpm_section(f, "build", result.get("build()"))
-        write_rpm_section(f, "install", result.get("package()"))
-        write_rpm_section(f, "files", None)
+        write_rpm_section(f, "build", wrap_code_section(result.get("build()")))
+        write_rpm_section(f, "install", wrap_code_section(result.get("package()")))
+        write_rpm_section(f, "files", "/*")
 
 def main():
     parser = argparse.ArgumentParser(description="Convert Linux packages")
