@@ -38,3 +38,6 @@ Source: curl-git-7.56.0.55.g4440b6ad5.tar.gz
 
 %files
 /*
+%exclude %dir /usr/bin
+%exclude %dir /usr/lib
+

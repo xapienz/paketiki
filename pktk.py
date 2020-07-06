@@ -170,7 +170,10 @@ def write_rpm(file, result):
         write_rpm_section(f, "description", result.get("description"))
         write_rpm_section(f, "build", wrap_code_section(result.get("build()")))
         write_rpm_section(f, "install", wrap_code_section(result.get("package()")))
-        write_rpm_section(f, "files", "/*")
+        write_rpm_section(f, "files", 
+            "/*\n" +
+            "%exclude %dir /usr/bin\n" +
+            "%exclude %dir /usr/lib\n")
 
 def main():
     parser = argparse.ArgumentParser(description="Convert Linux packages")
