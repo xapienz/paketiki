@@ -132,11 +132,18 @@ def replace_packages(list):
         mapping = json.load(f)
 
     result = []
+    version_pattern = re.compile(r"^(\w+)=(.*)$")
     for item in list:
-        if mapped := mapping.get(item):
+        if m := version_pattern.match(item):
+            package = m.group(1)
+        else:
+            package = item
+
+        # TODO: also use version
+        if mapped := mapping.get(package):
             result.extend(mapped)
         else:
-            result.append(item)
+            result.append(package)
     return result
 
 def wrap_code_section(code):

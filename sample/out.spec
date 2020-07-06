@@ -10,7 +10,7 @@ Requires: openssl
 Requires: zlib
 Requires: libpsl
 Requires: libnghttp2
-Provides: curl=7.56.0.55.g4440b6ad5
+Provides: curl
 Provides: libcurl.so
 Conflicts: curl
 BuildRequires: git
