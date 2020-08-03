@@ -3,5 +3,8 @@
     "qt5-tools": {"packages": ["qt5-devel"], "aliases": ["qmake=qmake-qt5"]},
     "java-runtime": {"packages": ["java-latest-openjdk"]},
     "qt5-webkit": {"packages": ["qt5-qtwebkit"]},
+    "freetype2": {"packages": ["freetype"]},
+    "libxrender": {"packages": ["libXrender"]},
+    "libxtst": {"packages": ["libXtst"]},
     "nixnote2-git": {"extra_deps": ["libcurl"]}
 }

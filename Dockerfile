@@ -9,10 +9,13 @@ RUN chown pktk /paketiki
 USER pktk
 WORKDIR /paketiki
 
-COPY pktk.py .
 COPY common.sh .
-COPY pkgbuild_mapping.json .
 
+COPY from_pkgbuild_prepare.sh .
+RUN ./from_pkgbuild_prepare.sh $PACKAGE
+
+COPY pktk.py .
+COPY pkgbuild_mapping.json .
 COPY from_pkgbuild.sh .
 RUN ./from_pkgbuild.sh $PACKAGE
 
