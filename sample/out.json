@@ -38,5 +38,38 @@
     "x86_64"
   ],
   "build()": "    cd curl;\n    ./buildconf;\n    ./configure --prefix=/usr --mandir=/usr/share/man --disable-ldap --disable-ldaps --enable-ipv6 --enable-manual --enable-versioned-symbols --enable-threaded-resolver --with-gssapi --with-random=/dev/urandom --with-ca-bundle=/etc/ssl/certs/ca-certificates.crt;\n    make",
-  "package()": "    cd curl;\n    make DESTDIR=\"$pkgdir\" install;\n    install -Dm644 COPYING \"$pkgdir/usr/share/licenses/$pkgname/COPYING\""
+  "package()": "    cd curl;\n    make DESTDIR=\"$pkgdir\" install;\n    install -Dm644 COPYING \"$pkgdir/usr/share/licenses/$pkgname/COPYING\"",
+  "pkgbuild_pkgname": null,
+  "rpm_requires": [
+    "ca-certificates",
+    "krb5-libs",
+    "libssh2",
+    "openssl",
+    "zlib",
+    "libpsl",
+    "libnghttp2"
+  ],
+  "rpm_provides": [
+    "curl",
+    "libcurl.so"
+  ],
+  "rpm_conflicts": [
+    "curl"
+  ],
+  "rpm_obsoletes": [],
+  "rpm_buildrequires": [
+    "git"
+  ],
+  "rpm_aliases": [],
+  "rpm_extra_deps": [],
+  "rpm_devel": [
+    "ca-certificates-devel",
+    "krb5-libs-devel",
+    "libssh2-devel",
+    "openssl-devel",
+    "zlib-devel",
+    "libpsl-devel",
+    "libnghttp2-devel",
+    "git-devel"
+  ]
 }

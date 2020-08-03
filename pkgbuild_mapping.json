@@ -1,3 +1,7 @@
 {
-    "krb5": ["krb5-libs"]
+    "krb5": {"packages": ["krb5-libs"]},
+    "qt5-tools": {"packages": ["qt5-devel"], "aliases": ["qmake=qmake-qt5"]},
+    "java-runtime": {"packages": ["java-latest-openjdk"]},
+    "qt5-webkit": {"packages": ["qt5-qtwebkit"]},
+    "nixnote2-git": {"extra_deps": ["libcurl"]}
 }

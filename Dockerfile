@@ -1,19 +1,27 @@
 FROM fedora:32
-RUN dnf install -y rpm-build rpmdevtools git autoconf libtool make wget
+RUN dnf install -y rpm-build rpmdevtools git autoconf libtool make wget pacman jq dnf-plugins-core
+ARG PACKAGE
 
-RUN useradd rpmbuild
+RUN useradd pktk
 RUN mkdir -p /paketiki
-RUN chown rpmbuild /paketiki
+RUN chown pktk /paketiki
 
-USER rpmbuild
+USER pktk
 WORKDIR /paketiki
 
-COPY prepare_source.sh .
-RUN ./prepare_source.sh
-
 COPY pktk.py .
+COPY common.sh .
 COPY pkgbuild_mapping.json .
-RUN ./pktk.py PKGBUILD out
-RUN rpmbuild -bb out.spec
+
+COPY from_pkgbuild.sh .
+RUN ./from_pkgbuild.sh $PACKAGE
+
+USER root
+COPY to_rpmbuild_prepare.sh .
+RUN ./to_rpmbuild_prepare.sh $PACKAGE
+
+USER pktk
+COPY to_rpmbuild.sh .
+RUN ./to_rpmbuild.sh $PACKAGE
 
 USER root

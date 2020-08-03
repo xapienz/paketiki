@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import collections
 import json
 import os
 import re
@@ -105,7 +106,9 @@ set
     result["arch"] = parse_bash_array(vars_after.get("arch"))
     result["build()"] = vars_after.get("build ()")
     result["package()"] = vars_after.get("package ()")
-    
+
+    # platform-specific fields:
+    result["pkgbuild_pkgname"] = vars_after.get("_pkgname")
     return result
 
 def write_json(file, result):
@@ -125,13 +128,18 @@ def write_rpm_field(f, name, value):
     if value:
         print("{}: {}".format(name, value), file=f)
 
-def replace_packages(list):
-    if not list:
-        return []
-    with open("pkgbuild_mapping.json", "r") as f:
-        mapping = json.load(f)
+def write_rpm_variable(f, name, value):
+    if value:
+        print("%define {} {}".format(name, value), file=f)
 
-    result = []
+def map_packages(mapping, list):
+    MappedPackage=collections.namedtuple("MappedPackage", ["packages", "aliases", "extra_deps"])
+    if not list:
+        return MappedPackage([], [], [])
+    
+    packages = []
+    aliases = []
+    extra_deps = []
     version_pattern = re.compile(r"^(\w+)=(.*)$")
     for item in list:
         if m := version_pattern.match(item):
@@ -140,17 +148,43 @@ def replace_packages(list):
             package = item
 
         # TODO: also use version
-        if mapped := mapping.get(package):
-            result.extend(mapped)
+        mapped = mapping.get(package) or {}
+        if (mapped_packages := mapped.get("packages")) is None:
+            packages.append(package)
         else:
-            result.append(package)
-    return result
+            packages.extend(mapped_packages)
+        aliases.extend(mapped.get("aliases") or [])
+        extra_deps.extend(mapped.get("extra_deps") or [])
+    return MappedPackage(packages, aliases, extra_deps)
 
-def wrap_code_section(code):
+def wrap_code_section(code, aliases_list):
     if code:
-        return '    export pkgdir="%{buildroot}"\n' + code
+        vars = """    export pkgdir="%{buildroot}"
+    export srcdir="%{srcdir}"
+    export _pkgname="%{_pkgname}"
+"""
+        aliases = ""
+        for alias in aliases_list:
+            aliases += "    alias {}\n".format(alias)
+        return vars + aliases + code
     else:
         return None
+
+# append rpm-specific stuff to json
+def make_rpm_json(value):
+    with open("pkgbuild_mapping.json", "r") as f:
+        mapping = json.load(f)
+
+    result = value
+    result["rpm_requires"] = map_packages(mapping, result.get("depends")).packages
+    result["rpm_provides"] = map_packages(mapping, result.get("provides")).packages
+    result["rpm_conflicts"] = map_packages(mapping, result.get("conflicts")).packages
+    result["rpm_obsoletes"] = map_packages(mapping, result.get("obsoletes")).packages
+    result["rpm_buildrequires"] = map_packages(mapping, result.get("makedepends")).packages
+    result["rpm_aliases"] = map_packages(mapping, result.get("makedepends")).aliases
+    result["rpm_extra_deps"] = map_packages(mapping, [result.get("name")]).extra_deps
+    result["rpm_devel"] = [p + "-devel" for p in result["rpm_requires"] + result["rpm_buildrequires"] + result["rpm_extra_deps"]]
+    return result
 
 def write_rpm(file, result):
     with open(file, "w") as f:
@@ -159,17 +193,19 @@ def write_rpm(file, result):
         write_rpm_field(f, "Release", result.get("release"))
         write_rpm_field(f, "Summary", result.get("description"))
         write_rpm_array(f, "License", result.get("license"))
-        write_rpm_array(f, "Requires", replace_packages(result.get("depends")))
-        write_rpm_array(f, "Provides", replace_packages(result.get("provides")))
-        write_rpm_array(f, "Conflicts", replace_packages(result.get("conflicts")))
-        write_rpm_array(f, "Obsoletes", replace_packages(result.get("replaces")))
-        write_rpm_array(f, "BuildRequires", replace_packages(result.get("makedepends")))
+        write_rpm_array(f, "Requires", result.get("rpm_requires"))
+        write_rpm_array(f, "Provides", result.get("rpm_provides"))
+        write_rpm_array(f, "Conflicts", result.get("rpm_conflicts"))
+        write_rpm_array(f, "Obsoletes", result.get("rpm_onsoletes"))
+        write_rpm_array(f, "BuildRequires", result.get("rpm_buildrequires"))
         write_rpm_field(f, "Source", "{}-{}.tar.gz".format(result.get("name"), result.get("version")))
-        print("%define debug_package %{nil}", file=f)
+        write_rpm_variable(f, "debug_package", "%{nil}")
+        write_rpm_variable(f, "srcdir", "%{_builddir}/" + "{}-{}".format(result.get("name"), result.get("version")))
+        write_rpm_variable(f, "_pkgname", result.get("pkgbuild_pkgname"))
         write_rpm_section(f, "prep", "%setup")
         write_rpm_section(f, "description", result.get("description"))
-        write_rpm_section(f, "build", wrap_code_section(result.get("build()")))
-        write_rpm_section(f, "install", wrap_code_section(result.get("package()")))
+        write_rpm_section(f, "build", wrap_code_section(result.get("build()"), result.get("rpm_aliases")))
+        write_rpm_section(f, "install", wrap_code_section(result.get("package()"), result.get("rpm_aliases")))
         write_rpm_section(f, "files", 
             "/*\n" +
             "%exclude %dir /usr/bin\n" +
@@ -181,6 +217,7 @@ def main():
     parser.add_argument("output", help="Path to output")
     args = parser.parse_args()
     value = read_pkgbuild(args.pkgbuild)
+    value = make_rpm_json(value)
     write_json(args.output + ".json", value)
     write_rpm(args.output + ".spec", value)
 
