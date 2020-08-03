@@ -202,6 +202,7 @@ def write_rpm(file, result):
         write_rpm_array(f, "Obsoletes", result.get("rpm_onsoletes"))
         write_rpm_array(f, "BuildRequires", result.get("rpm_buildrequires"))
         write_rpm_field(f, "Source", "{}-{}.tar.gz".format(result.get("name"), result.get("version")))
+        write_rpm_variable(f, "__brp_mangle_shebangs", "%{nil}")
         write_rpm_variable(f, "debug_package", "%{nil}")
         write_rpm_variable(f, "srcdir", "%{_builddir}/" + "{}-{}".format(result.get("name"), result.get("version")))
         # TODO: just write all vars
