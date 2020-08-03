@@ -140,7 +140,7 @@ def map_packages(mapping, list):
     packages = []
     aliases = []
     extra_deps = []
-    version_pattern = re.compile(r"^(\w+)=(.*)$")
+    version_pattern = re.compile(r"^([\w_-]+)>?<?=(.*)$")
     for item in list:
         if m := version_pattern.match(item):
             package = m.group(1)
