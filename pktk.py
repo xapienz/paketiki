@@ -199,7 +199,7 @@ def write_rpm(file, result):
         write_rpm_array(f, "Requires", result.get("rpm_requires"))
         write_rpm_array(f, "Provides", result.get("rpm_provides"))
         write_rpm_array(f, "Conflicts", result.get("rpm_conflicts"))
-        write_rpm_array(f, "Obsoletes", result.get("rpm_onsoletes"))
+        write_rpm_array(f, "Obsoletes", result.get("rpm_obsoletes"))
         write_rpm_array(f, "BuildRequires", result.get("rpm_buildrequires"))
         write_rpm_field(f, "Source", "{}-{}.tar.gz".format(result.get("name"), result.get("version")))
         write_rpm_variable(f, "__brp_mangle_shebangs", "%{nil}")
