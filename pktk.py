@@ -109,6 +109,7 @@ set
 
     # platform-specific fields:
     result["pkgbuild_pkgname"] = vars_after.get("_pkgname")
+    result["pkgbuild_pkgfolder"] = vars_after.get("_pkgfolder")
     return result
 
 def write_json(file, result):
@@ -161,7 +162,9 @@ def wrap_code_section(code, aliases_list):
     if code:
         vars = """    export pkgdir="%{buildroot}"
     export srcdir="%{srcdir}"
+    export pkgname="%{pkgname}"
     export _pkgname="%{_pkgname}"
+    export _pkgfolder="%{_pkgfolder}"
 """
         aliases = ""
         for alias in aliases_list:
@@ -201,7 +204,10 @@ def write_rpm(file, result):
         write_rpm_field(f, "Source", "{}-{}.tar.gz".format(result.get("name"), result.get("version")))
         write_rpm_variable(f, "debug_package", "%{nil}")
         write_rpm_variable(f, "srcdir", "%{_builddir}/" + "{}-{}".format(result.get("name"), result.get("version")))
+        # TODO: just write all vars
+        write_rpm_variable(f, "pkgname", result.get("name"))
         write_rpm_variable(f, "_pkgname", result.get("pkgbuild_pkgname"))
+        write_rpm_variable(f, "_pkgfolder", result.get("pkgbuild_pkgfolder"))
         write_rpm_section(f, "prep", "%setup")
         write_rpm_section(f, "description", result.get("description"))
         write_rpm_section(f, "build", wrap_code_section(result.get("build()"), result.get("rpm_aliases")))

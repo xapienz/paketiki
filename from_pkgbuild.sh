@@ -24,6 +24,9 @@ generate_source() {
                 rm -rf "$file-bare"
             fi
             rm -rf "$file/.git"
+        elif [[ "$file" == *.tar.gz ]]; then
+            tar xf "$file"
+            rm "$file"
         fi
     done
     popd
